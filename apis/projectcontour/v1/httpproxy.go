@@ -199,6 +199,30 @@ type Service struct {
 	UpstreamValidation *UpstreamValidation `json:"validation,omitempty"`
 	// If Mirror is true the Service will receive a read only mirror of the traffic for this route.
 	Mirror bool `json:"mirror,omitempty"`
+	// RequestHeaders defines how to add or remove headers from requests routed to this service.
+	// +optional
+	RequestHeaders *HeaderAlterations `json:"requestHeaders,omitempty"`
+	// ResponseHeaders defines how to add or remove headers from responses returned from this service.
+	// +optional
+	ResponseHeaders *HeaderAlterations `json:"responseHeaders,omitempty"`
+}
+
+// HeaderAlterations defines alterations to the headers being sent to or returned from a service.
+type HeaderAlterations struct {
+	// Add holds the header key/value pairs to add to those sent to or returned from a service.
+	// +optional
+	Add []HeaderAddition `json:"add,omitempty"`
+	// Remove lists the header keys to remove from those sent to or returned from a service.
+	// +optional
+	Remove []string `json:"remove,omitempty"`
+}
+
+// HeaderAddition defines a header key/value pair to be added to those sent to or return from a service.
+type HeaderAddition struct {
+	// Name is the header key to add.
+	Name string `json:"name"`
+	// Value is the header value to add.
+	Value string `json:"value"`
 }
 
 // HTTPHealthCheckPolicy defines health checks on the upstream service.

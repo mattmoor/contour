@@ -690,6 +690,66 @@ spec:
                           description: Port (defined as Integer) to proxy traffic
                             to since a service can have multiple defined.
                           type: integer
+                        requestHeaders:
+                          description: RequestHeaders defines how to add or remove
+                            headers from requests routed to this service.
+                          properties:
+                            add:
+                              description: Add holds the header key/value pairs to
+                                add to those sent to or returned from a service.
+                              items:
+                                description: HeaderAddition defines a header key/value
+                                  pair to be added to those sent to or return from
+                                  a service.
+                                properties:
+                                  name:
+                                    description: Name is the header key to add.
+                                    type: string
+                                  value:
+                                    description: Value is the header value to add.
+                                    type: string
+                                required:
+                                - name
+                                - value
+                                type: object
+                              type: array
+                            remove:
+                              description: Remove lists the header keys to remove
+                                from those sent to or returned from a service.
+                              items:
+                                type: string
+                              type: array
+                          type: object
+                        responseHeaders:
+                          description: ResponseHeaders defines how to add or remove
+                            headers from responses returned from this service.
+                          properties:
+                            add:
+                              description: Add holds the header key/value pairs to
+                                add to those sent to or returned from a service.
+                              items:
+                                description: HeaderAddition defines a header key/value
+                                  pair to be added to those sent to or return from
+                                  a service.
+                                properties:
+                                  name:
+                                    description: Name is the header key to add.
+                                    type: string
+                                  value:
+                                    description: Value is the header value to add.
+                                    type: string
+                                required:
+                                - name
+                                - value
+                                type: object
+                              type: array
+                            remove:
+                              description: Remove lists the header keys to remove
+                                from those sent to or returned from a service.
+                              items:
+                                type: string
+                              type: array
+                          type: object
                         validation:
                           description: UpstreamValidation defines how to verify the
                             backend service's certificate
@@ -774,6 +834,66 @@ spec:
                         description: Port (defined as Integer) to proxy traffic to
                           since a service can have multiple defined.
                         type: integer
+                      requestHeaders:
+                        description: RequestHeaders defines how to add or remove headers
+                          from requests routed to this service.
+                        properties:
+                          add:
+                            description: Add holds the header key/value pairs to add
+                              to those sent to or returned from a service.
+                            items:
+                              description: HeaderAddition defines a header key/value
+                                pair to be added to those sent to or return from a
+                                service.
+                              properties:
+                                name:
+                                  description: Name is the header key to add.
+                                  type: string
+                                value:
+                                  description: Value is the header value to add.
+                                  type: string
+                              required:
+                              - name
+                              - value
+                              type: object
+                            type: array
+                          remove:
+                            description: Remove lists the header keys to remove from
+                              those sent to or returned from a service.
+                            items:
+                              type: string
+                            type: array
+                        type: object
+                      responseHeaders:
+                        description: ResponseHeaders defines how to add or remove
+                          headers from responses returned from this service.
+                        properties:
+                          add:
+                            description: Add holds the header key/value pairs to add
+                              to those sent to or returned from a service.
+                            items:
+                              description: HeaderAddition defines a header key/value
+                                pair to be added to those sent to or return from a
+                                service.
+                              properties:
+                                name:
+                                  description: Name is the header key to add.
+                                  type: string
+                                value:
+                                  description: Value is the header value to add.
+                                  type: string
+                              required:
+                              - name
+                              - value
+                              type: object
+                            type: array
+                          remove:
+                            description: Remove lists the header keys to remove from
+                              those sent to or returned from a service.
+                            items:
+                              type: string
+                            type: array
+                        type: object
                       validation:
                         description: UpstreamValidation defines how to verify the
                           backend service's certificate

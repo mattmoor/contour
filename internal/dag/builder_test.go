@@ -14,6 +14,7 @@
 package dag
 
 import (
+	"errors"
 	"testing"
 	"time"
 
@@ -6083,6 +6084,7 @@ func TestHttpPaths(t *testing.T) {
 		})
 	}
 }
+
 func TestEnforceRoute(t *testing.T) {
 	tests := map[string]struct {
 		tlsEnabled     bool
@@ -6168,6 +6170,85 @@ func TestSplitSecret(t *testing.T) {
 			}
 			if diff := cmp.Diff(tc.want, got, opts...); diff != "" {
 				t.Fatal(diff)
+			}
+		})
+	}
+}
+
+func TestValidateHeaderAlteration(t *testing.T) {
+	tests := []struct {
+		name       string
+		in         *projcontour.HeaderAlterations
+		wantAdd    map[string]string
+		wantRemove []string
+		wantErr    error
+	}{{
+		name: "empty is fine",
+	}, {
+		name: "add two, remove one",
+		in: &projcontour.HeaderAlterations{
+			Add: []projcontour.HeaderAddition{{
+				Name:  "K-Foo",
+				Value: "bar",
+			}, {
+				Name:  "k-baz", // This gets canonicalized
+				Value: "blah",
+			}},
+			Remove: []string{"K-Nada"},
+		},
+		wantAdd: map[string]string{
+			"K-Foo": "bar",
+			"K-Baz": "blah",
+		},
+		wantRemove: []string{"K-Nada"},
+	}, {
+		name: "duplicate add",
+		in: &projcontour.HeaderAlterations{
+			Add: []projcontour.HeaderAddition{{
+				Name:  "K-Foo",
+				Value: "bar",
+			}, {
+				Name:  "k-foo", // This gets canonicalized
+				Value: "blah",
+			}},
+		},
+		wantErr: errors.New(`Duplicate header addition: "K-Foo"`),
+	}, {
+		name: "duplicate remove",
+		in: &projcontour.HeaderAlterations{
+			Remove: []string{"K-Foo", "k-foo"},
+		},
+		wantErr: errors.New(`Duplicate header removal: "K-Foo"`),
+	}, {
+		name: "invalid add header",
+		in: &projcontour.HeaderAlterations{
+			Add: []projcontour.HeaderAddition{{
+				Name:  "  K-Foo",
+				Value: "bar",
+			}},
+		},
+		wantErr: errors.New(`invalid add header "  K-Foo": [a valid HTTP header must consist of alphanumeric characters or '-' (e.g. 'X-Header-Name', regex used for validation is '[-A-Za-z0-9]+')]`),
+	}, {
+		name: "invalid remove header",
+		in: &projcontour.HeaderAlterations{
+			Remove: []string{"  K-Foo"},
+		},
+		wantErr: errors.New(`invalid remove header "  K-Foo": [a valid HTTP header must consist of alphanumeric characters or '-' (e.g. 'X-Header-Name', regex used for validation is '[-A-Za-z0-9]+')]`),
+	}}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			gotAdd, gotRemove, gotErr := validateHeaderAlterations(test.in)
+			if !cmp.Equal(test.wantAdd, gotAdd) {
+				t.Errorf("add (-want, +got) = %s", cmp.Diff(test.wantAdd, gotAdd))
+			}
+			if !cmp.Equal(test.wantRemove, gotRemove) {
+				t.Errorf("remove (-want, +got) = %s", cmp.Diff(test.wantRemove, gotRemove))
+			}
+			if (test.wantErr != nil) != (gotErr != nil) {
+				t.Errorf("err = %v, wanted %v", gotErr, test.wantErr)
+			} else if test.wantErr != nil && gotErr != nil && test.wantErr.Error() != gotErr.Error() {
+				t.Errorf("err = %v, wanted %v", gotErr, test.wantErr)
 			}
 		})
 	}
