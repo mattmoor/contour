@@ -85,12 +85,11 @@ func RouteRoute(r *dag.Route) *envoy_api_v2_route.Route_Route {
 		)
 	}
 
-	switch len(r.Clusters) {
-	case 1:
+	if singleSimpleCluster(r.Clusters) {
 		ra.ClusterSpecifier = &envoy_api_v2_route.RouteAction_Cluster{
 			Cluster: Clustername(r.Clusters[0]),
 		}
-	default:
+	} else {
 		ra.ClusterSpecifier = &envoy_api_v2_route.RouteAction_WeightedClusters{
 			WeightedClusters: weightedClusters(r.Clusters),
 		}
@@ -194,6 +193,40 @@ func UpgradeHTTPS() *envoy_api_v2_route.Route_Redirect {
 	}
 }
 
+func headerValueList(hvm map[string]string) (hvs []*envoy_api_v2_core.HeaderValueOption) {
+	for key, value := range hvm {
+		hvs = append(hvs, &envoy_api_v2_core.HeaderValueOption{
+			Header: &envoy_api_v2_core.HeaderValue{
+				Key:   key,
+				Value: value,
+			},
+		})
+	}
+	sort.Slice(hvs, func(i, j int) bool {
+		return hvs[i].Header.Key < hvs[j].Header.Key
+	})
+	return
+}
+
+// singleSimpleCluster determines whether we can use a RouteAction_Cluster
+// or must use a RouteAction_WeighedCluster to encode additional routing data.
+func singleSimpleCluster(clusters []*dag.Cluster) bool {
+	// If there are multiple clusters, than we cannot simply dispatch
+	// to it by name.
+	if len(clusters) != 1 {
+		return false
+	}
+	cluster := clusters[0]
+
+	// If the target cluster performs any kind of header manipulation,
+	// then we should use a WeightedCluster to encode the additional
+	// configuration.
+	return 0 == (len(cluster.AddRequestHeaders) +
+		len(cluster.RemoveRequestHeaders) +
+		len(cluster.AddResponseHeaders) +
+		len(cluster.RemoveResponseHeaders))
+}
+
 // weightedClusters returns a route.WeightedCluster for multiple services.
 func weightedClusters(clusters []*dag.Cluster) *envoy_api_v2_route.WeightedCluster {
 	var wc envoy_api_v2_route.WeightedCluster
@@ -203,6 +236,11 @@ func weightedClusters(clusters []*dag.Cluster) *envoy_api_v2_route.WeightedClust
 		wc.Clusters = append(wc.Clusters, &envoy_api_v2_route.WeightedCluster_ClusterWeight{
 			Name:   Clustername(cluster),
 			Weight: protobuf.UInt32(cluster.Weight),
+
+			RequestHeadersToAdd:     headerValueList(cluster.AddRequestHeaders),
+			RequestHeadersToRemove:  cluster.RemoveRequestHeaders,
+			ResponseHeadersToAdd:    headerValueList(cluster.AddResponseHeaders),
+			ResponseHeadersToRemove: cluster.RemoveResponseHeaders,
 		})
 	}
 	// Check if no weights were defined, if not default to even distribution

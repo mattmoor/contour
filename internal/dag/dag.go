@@ -353,6 +353,11 @@ type Cluster struct {
 
 	// Cluster health check policy.
 	*HealthCheckPolicy
+
+	AddRequestHeaders     map[string]string
+	RemoveRequestHeaders  []string
+	AddResponseHeaders    map[string]string
+	RemoveResponseHeaders []string
 }
 
 func (c Cluster) Visit(f func(Vertex)) {

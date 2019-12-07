@@ -15,6 +15,7 @@ package dag
 
 import (
 	"fmt"
+	"net/http"
 	"sort"
 	"strconv"
 	"strings"
@@ -22,6 +23,8 @@ import (
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/api/networking/v1beta1"
 	"k8s.io/apimachinery/pkg/util/intstr"
+	"k8s.io/apimachinery/pkg/util/sets"
+	"k8s.io/apimachinery/pkg/util/validation"
 
 	"github.com/google/go-cmp/cmp"
 	ingressroutev1 "github.com/projectcontour/contour/apis/contour/v1beta1"
@@ -754,12 +757,29 @@ func (b *Builder) computeRoutes(sw *ObjectStatusWriter, proxy *projcontour.HTTPP
 				}
 			}
 
+			requestAdd, requestRemove, err := validateHeaderAlterations(service.RequestHeaders)
+			if err != nil {
+				sw.SetInvalid(err.Error())
+				return nil
+			}
+
+			responseAdd, responseRemove, err := validateHeaderAlterations(service.ResponseHeaders)
+			if err != nil {
+				sw.SetInvalid(err.Error())
+				return nil
+			}
+
 			c := &Cluster{
 				Upstream:           s,
 				LoadBalancerPolicy: loadBalancerPolicy(route.LoadBalancerPolicy),
 				Weight:             service.Weight,
 				HealthCheckPolicy:  healthCheckPolicy(route.HealthCheckPolicy),
 				UpstreamValidation: uv,
+
+				AddRequestHeaders:     requestAdd,
+				RemoveRequestHeaders:  requestRemove,
+				AddResponseHeaders:    responseAdd,
+				RemoveResponseHeaders: responseRemove,
 			}
 			if service.Mirror && r.MirrorPolicy != nil {
 				sw.SetInvalid("only one service per route may be nominated as mirror")
@@ -780,6 +800,38 @@ func (b *Builder) computeRoutes(sw *ObjectStatusWriter, proxy *projcontour.HTTPP
 
 	sw.SetValid()
 	return routes
+}
+
+func validateHeaderAlterations(alt *projcontour.HeaderAlterations) (map[string]string, []string, error) {
+	if alt == nil {
+		return nil, nil, nil
+	}
+	add := make(map[string]string)
+
+	for _, entry := range alt.Add {
+		key := http.CanonicalHeaderKey(entry.Name)
+		_, ok := add[key]
+		if ok {
+			return nil, nil, fmt.Errorf("Duplicate header addition: %q", key)
+		}
+		if msgs := validation.IsHTTPHeaderName(key); len(msgs) != 0 {
+			return nil, nil, fmt.Errorf("invalid add header %q: %v", key, msgs)
+		}
+		add[key] = entry.Value
+	}
+
+	remove := sets.NewString()
+	for _, entry := range alt.Remove {
+		key := http.CanonicalHeaderKey(entry)
+		if remove.Has(key) {
+			return nil, nil, fmt.Errorf("Duplicate header removal: %q", key)
+		}
+		if msgs := validation.IsHTTPHeaderName(key); len(msgs) != 0 {
+			return nil, nil, fmt.Errorf("invalid remove header %q: %v", key, msgs)
+		}
+		remove.Insert(key)
+	}
+	return add, remove.List(), nil
 }
 
 func includeConditionsIdentical(includes []projcontour.Include) bool {

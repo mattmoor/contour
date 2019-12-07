@@ -201,6 +201,63 @@ func TestRouteRoute(t *testing.T) {
 				},
 			},
 		},
+		"single with header manipulations": {
+			route: &dag.Route{
+				Websocket: true,
+				Clusters: []*dag.Cluster{{
+					Upstream: &dag.Service{
+						Name:        s1.Name,
+						Namespace:   s1.Namespace,
+						ServicePort: &s1.Spec.Ports[0],
+					},
+
+					AddRequestHeaders: map[string]string{
+						"K-Foo":   "bar",
+						"K-Sauce": "spicy",
+					},
+					RemoveRequestHeaders: []string{"K-Bar"},
+					AddResponseHeaders: map[string]string{
+						"K-Blah": "boo",
+					},
+					RemoveResponseHeaders: []string{"K-Baz"},
+				}},
+			},
+			want: &envoy_api_v2_route.Route_Route{
+				Route: &envoy_api_v2_route.RouteAction{
+					ClusterSpecifier: &envoy_api_v2_route.RouteAction_WeightedClusters{
+						WeightedClusters: &envoy_api_v2_route.WeightedCluster{
+							Clusters: []*envoy_api_v2_route.WeightedCluster_ClusterWeight{{
+								Name:   "default/kuard/8080/da39a3ee5e",
+								Weight: protobuf.UInt32(1),
+								RequestHeadersToAdd: []*envoy_api_v2_core.HeaderValueOption{{
+									Header: &envoy_api_v2_core.HeaderValue{
+										Key:   "K-Foo",
+										Value: "bar",
+									},
+								}, {
+									Header: &envoy_api_v2_core.HeaderValue{
+										Key:   "K-Sauce",
+										Value: "spicy",
+									},
+								}},
+								RequestHeadersToRemove: []string{"K-Bar"},
+								ResponseHeadersToAdd: []*envoy_api_v2_core.HeaderValueOption{{
+									Header: &envoy_api_v2_core.HeaderValue{
+										Key:   "K-Blah",
+										Value: "boo",
+									},
+								}},
+								ResponseHeadersToRemove: []string{"K-Baz"},
+							}},
+							TotalWeight: protobuf.UInt32(1),
+						},
+					},
+					UpgradeConfigs: []*envoy_api_v2_route.RouteAction_UpgradeConfig{{
+						UpgradeType: "websocket",
+					}},
+				},
+			},
+		},
 		"single service without retry-on": {
 			route: &dag.Route{
 				RetryPolicy: &dag.RetryPolicy{
