@@ -757,13 +757,13 @@ func (b *Builder) computeRoutes(sw *ObjectStatusWriter, proxy *projcontour.HTTPP
 				}
 			}
 
-			requestAdd, requestRemove, err := validateHeaderAlterations(service.RequestHeaders)
+			requestAdd, requestRemove, err := validateHeaderRewritePolicy(service.RequestHeaders)
 			if err != nil {
 				sw.SetInvalid(err.Error())
 				return nil
 			}
 
-			responseAdd, responseRemove, err := validateHeaderAlterations(service.ResponseHeaders)
+			responseAdd, responseRemove, err := validateHeaderRewritePolicy(service.ResponseHeaders)
 			if err != nil {
 				sw.SetInvalid(err.Error())
 				return nil
@@ -802,7 +802,13 @@ func (b *Builder) computeRoutes(sw *ObjectStatusWriter, proxy *projcontour.HTTPP
 	return routes
 }
 
-func validateHeaderAlterations(alt *projcontour.HeaderAlterations) (map[string]string, []string, error) {
+func escapeHeaderValue(value string) string {
+	// Envoy supports %-encoded variables, so literal %'s in the header's value must be escaped.  See:
+	// https://www.envoyproxy.io/docs/envoy/latest/configuration/http/http_conn_man/headers#custom-request-response-headers
+	return strings.Replace(value, "%", "%%", -1)
+}
+
+func validateHeaderRewritePolicy(alt *projcontour.HeaderRewritePolicy) (map[string]string, []string, error) {
 	if alt == nil {
 		return nil, nil, nil
 	}
@@ -810,14 +816,17 @@ func validateHeaderAlterations(alt *projcontour.HeaderAlterations) (map[string]s
 
 	for _, entry := range alt.Add {
 		key := http.CanonicalHeaderKey(entry.Name)
-		_, ok := add[key]
-		if ok {
+		if _, ok := add[key]; ok {
 			return nil, nil, fmt.Errorf("Duplicate header addition: %q", key)
+		}
+		switch key {
+		case "Host":
+			return nil, nil, fmt.Errorf("Rewriting %q header is not supported", key)
 		}
 		if msgs := validation.IsHTTPHeaderName(key); len(msgs) != 0 {
 			return nil, nil, fmt.Errorf("invalid add header %q: %v", key, msgs)
 		}
-		add[key] = entry.Value
+		add[key] = escapeHeaderValue(entry.Value)
 	}
 
 	remove := sets.NewString()

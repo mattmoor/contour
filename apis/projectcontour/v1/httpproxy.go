@@ -201,14 +201,14 @@ type Service struct {
 	Mirror bool `json:"mirror,omitempty"`
 	// RequestHeaders defines how to add or remove headers from requests routed to this service.
 	// +optional
-	RequestHeaders *HeaderAlterations `json:"requestHeaders,omitempty"`
+	RequestHeaders *HeaderRewritePolicy `json:"requestHeadersPolicy,omitempty"`
 	// ResponseHeaders defines how to add or remove headers from responses returned from this service.
 	// +optional
-	ResponseHeaders *HeaderAlterations `json:"responseHeaders,omitempty"`
+	ResponseHeaders *HeaderRewritePolicy `json:"responseHeadersPolicy,omitempty"`
 }
 
-// HeaderAlterations defines alterations to the headers being sent to or returned from a service.
-type HeaderAlterations struct {
+// HeaderRewritePolicy defines alterations to the headers being sent to or returned from a service.
+type HeaderRewritePolicy struct {
 	// Add holds the header key/value pairs to add to those sent to or returned from a service.
 	// +optional
 	Add []HeaderAddition `json:"add,omitempty"`

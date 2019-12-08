@@ -6178,7 +6178,7 @@ func TestSplitSecret(t *testing.T) {
 func TestValidateHeaderAlteration(t *testing.T) {
 	tests := []struct {
 		name       string
-		in         *projcontour.HeaderAlterations
+		in         *projcontour.HeaderRewritePolicy
 		wantAdd    map[string]string
 		wantRemove []string
 		wantErr    error
@@ -6186,7 +6186,7 @@ func TestValidateHeaderAlteration(t *testing.T) {
 		name: "empty is fine",
 	}, {
 		name: "add two, remove one",
-		in: &projcontour.HeaderAlterations{
+		in: &projcontour.HeaderRewritePolicy{
 			Add: []projcontour.HeaderAddition{{
 				Name:  "K-Foo",
 				Value: "bar",
@@ -6203,7 +6203,7 @@ func TestValidateHeaderAlteration(t *testing.T) {
 		wantRemove: []string{"K-Nada"},
 	}, {
 		name: "duplicate add",
-		in: &projcontour.HeaderAlterations{
+		in: &projcontour.HeaderRewritePolicy{
 			Add: []projcontour.HeaderAddition{{
 				Name:  "K-Foo",
 				Value: "bar",
@@ -6215,13 +6215,13 @@ func TestValidateHeaderAlteration(t *testing.T) {
 		wantErr: errors.New(`Duplicate header addition: "K-Foo"`),
 	}, {
 		name: "duplicate remove",
-		in: &projcontour.HeaderAlterations{
+		in: &projcontour.HeaderRewritePolicy{
 			Remove: []string{"K-Foo", "k-foo"},
 		},
 		wantErr: errors.New(`Duplicate header removal: "K-Foo"`),
 	}, {
 		name: "invalid add header",
-		in: &projcontour.HeaderAlterations{
+		in: &projcontour.HeaderRewritePolicy{
 			Add: []projcontour.HeaderAddition{{
 				Name:  "  K-Foo",
 				Value: "bar",
@@ -6230,15 +6230,44 @@ func TestValidateHeaderAlteration(t *testing.T) {
 		wantErr: errors.New(`invalid add header "  K-Foo": [a valid HTTP header must consist of alphanumeric characters or '-' (e.g. 'X-Header-Name', regex used for validation is '[-A-Za-z0-9]+')]`),
 	}, {
 		name: "invalid remove header",
-		in: &projcontour.HeaderAlterations{
+		in: &projcontour.HeaderRewritePolicy{
 			Remove: []string{"  K-Foo"},
 		},
 		wantErr: errors.New(`invalid remove header "  K-Foo": [a valid HTTP header must consist of alphanumeric characters or '-' (e.g. 'X-Header-Name', regex used for validation is '[-A-Za-z0-9]+')]`),
+	}, {
+		name: "invalid add header (special headers)",
+		in: &projcontour.HeaderRewritePolicy{
+			Add: []projcontour.HeaderAddition{{
+				Name:  "Host",
+				Value: "bar",
+			}},
+		},
+		wantErr: errors.New(`Rewriting "Host" header is not supported`),
+	}, {
+		name: "percents are escaped",
+		in: &projcontour.HeaderRewritePolicy{
+			Add: []projcontour.HeaderAddition{{
+				Name:  "K-Foo",
+				Value: "100%",
+			}, {
+				Name:  "Lot-Of-Percents",
+				Value: "%%%%%",
+			}, {
+				Name:  "k-baz", // This gets canonicalized
+				Value: "%DOWNSTREAM_LOCAL_ADDRESS%",
+			}},
+		},
+		wantAdd: map[string]string{
+			"K-Foo":           "100%%",
+			"K-Baz":           "%%DOWNSTREAM_LOCAL_ADDRESS%%",
+			"Lot-Of-Percents": "%%%%%%%%%%",
+		},
+		wantRemove: []string{},
 	}}
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			gotAdd, gotRemove, gotErr := validateHeaderAlterations(test.in)
+			gotAdd, gotRemove, gotErr := validateHeaderRewritePolicy(test.in)
 			if !cmp.Equal(test.wantAdd, gotAdd) {
 				t.Errorf("add (-want, +got) = %s", cmp.Diff(test.wantAdd, gotAdd))
 			}

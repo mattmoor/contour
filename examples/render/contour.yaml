@@ -764,7 +764,7 @@ spec:
                           description: Port (defined as Integer) to proxy traffic
                             to since a service can have multiple defined.
                           type: integer
-                        requestHeaders:
+                        requestHeadersPolicy:
                           description: RequestHeaders defines how to add or remove
                             headers from requests routed to this service.
                           properties:
@@ -794,7 +794,7 @@ spec:
                                 type: string
                               type: array
                           type: object
-                        responseHeaders:
+                        responseHeadersPolicy:
                           description: ResponseHeaders defines how to add or remove
                             headers from responses returned from this service.
                           properties:
@@ -908,7 +908,7 @@ spec:
                         description: Port (defined as Integer) to proxy traffic to
                           since a service can have multiple defined.
                         type: integer
-                      requestHeaders:
+                      requestHeadersPolicy:
                         description: RequestHeaders defines how to add or remove headers
                           from requests routed to this service.
                         properties:
@@ -938,7 +938,7 @@ spec:
                               type: string
                             type: array
                         type: object
-                      responseHeaders:
+                      responseHeadersPolicy:
                         description: ResponseHeaders defines how to add or remove
                           headers from responses returned from this service.
                         properties:
