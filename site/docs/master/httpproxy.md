@@ -477,6 +477,42 @@ HTTPProxy weighting follows some specific rules:
 - Weights are relative and do not need to add up to 100. If all weights for a route are specified, then the "total" weight is the sum of those specified. As an example, if weights are 20, 30, 20 for three upstreams, the total weight would be 70. In this example, a weight of 30 would receive approximately 42.9% of traffic (30/70 = .4285).
 - If some weights are specified but others are not, then it's assumed that upstreams without weights have an implicit weight of zero, and thus will not receive traffic.
 
+#### Request and Response Header Policies
+
+Manipulating headers is also supported per-Service.  Headers can be added to or
+removed from the request or response as follows:
+
+```yaml
+apiVersion: projectcontour.io/v1
+kind: HTTPProxy
+metadata:
+  name: header-manipulation
+  namespace: default
+spec:
+  virtualhost:
+    fqdn: headers.bar.com
+  routes:
+    - services:
+        - name: s1
+          port: 80
+	  requestHeaderPolicy:
+	    add:
+	      - name: X-Foo
+	        value: bar
+	    remove:
+	      - X-Baz
+	  responseHeaderPolicy:
+	    add:
+	      - name: X-Service-Name
+	        value: s1
+	    remove:
+	      - X-Internal-Secret
+```
+
+In this example we are adding the header `X-Foo` with value `baz` to requests
+and stripping `X-Baz`.  We are then adding `X-Service-Name` to the response with
+value `s1`, and removing `X-Internal-Secret`.
+
 #### Traffic mirroring
 
 Per route a service can be nominated as a mirror.
