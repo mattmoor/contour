@@ -1984,7 +1984,7 @@ func TestRouteVisit(t *testing.T) {
 								Port: 80,
 							}},
 							RequestHeadersPolicy: &projcontour.HeaderPolicy{
-								Set: []projcontour.HeaderAddition{{
+								Set: []projcontour.HeaderValue{{
 									Name:  "In-Foo",
 									Value: "bar",
 								}},
@@ -1993,7 +1993,7 @@ func TestRouteVisit(t *testing.T) {
 								},
 							},
 							ResponseHeadersPolicy: &projcontour.HeaderPolicy{
-								Set: []projcontour.HeaderAddition{{
+								Set: []projcontour.HeaderValue{{
 									Name:  "Out-Foo",
 									Value: "bar",
 								}},

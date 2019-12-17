@@ -672,7 +672,7 @@ spec:
                         description: Set sets the specified headers replacing any
                           existing values associated with the header names.
                         items:
-                          description: HeaderAddition defines a header key/value pair
+                          description: HeaderValue defines a header key/value pair
                             to be added to those sent to or return from a service.
                           properties:
                             name:
@@ -701,7 +701,7 @@ spec:
                         description: Set sets the specified headers replacing any
                           existing values associated with the header names.
                         items:
-                          description: HeaderAddition defines a header key/value pair
+                          description: HeaderValue defines a header key/value pair
                             to be added to those sent to or return from a service.
                           properties:
                             name:
@@ -762,7 +762,7 @@ spec:
                               description: Set sets the specified headers replacing
                                 any existing values associated with the header names.
                               items:
-                                description: HeaderAddition defines a header key/value
+                                description: HeaderValue defines a header key/value
                                   pair to be added to those sent to or return from
                                   a service.
                                 properties:
@@ -792,7 +792,7 @@ spec:
                               description: Set sets the specified headers replacing
                                 any existing values associated with the header names.
                               items:
-                                description: HeaderAddition defines a header key/value
+                                description: HeaderValue defines a header key/value
                                   pair to be added to those sent to or return from
                                   a service.
                                 properties:
@@ -906,7 +906,7 @@ spec:
                             description: Set sets the specified headers replacing
                               any existing values associated with the header names.
                             items:
-                              description: HeaderAddition defines a header key/value
+                              description: HeaderValue defines a header key/value
                                 pair to be added to those sent to or return from a
                                 service.
                               properties:
@@ -936,7 +936,7 @@ spec:
                             description: Set sets the specified headers replacing
                               any existing values associated with the header names.
                             items:
-                              description: HeaderAddition defines a header key/value
+                              description: HeaderValue defines a header key/value
                                 pair to be added to those sent to or return from a
                                 service.
                               properties:
