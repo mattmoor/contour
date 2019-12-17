@@ -24,6 +24,7 @@ import (
 	envoy_api_v2_core "github.com/envoyproxy/go-control-plane/envoy/api/v2/core"
 	envoy_api_v2_route "github.com/envoyproxy/go-control-plane/envoy/api/v2/route"
 	"github.com/golang/protobuf/proto"
+	"github.com/golang/protobuf/ptypes/wrappers"
 	ingressroutev1 "github.com/projectcontour/contour/apis/contour/v1beta1"
 	projcontour "github.com/projectcontour/contour/apis/projectcontour/v1"
 	"github.com/projectcontour/contour/internal/envoy"
@@ -1982,8 +1983,8 @@ func TestRouteVisit(t *testing.T) {
 								Name: "backend",
 								Port: 80,
 							}},
-							RequestHeaders: &projcontour.HeaderRewritePolicy{
-								Add: []projcontour.HeaderAddition{{
+							RequestHeadersPolicy: &projcontour.HeaderPolicy{
+								Set: []projcontour.HeaderAddition{{
 									Name:  "In-Foo",
 									Value: "bar",
 								}},
@@ -1991,8 +1992,8 @@ func TestRouteVisit(t *testing.T) {
 									"In-Baz",
 								},
 							},
-							ResponseHeaders: &projcontour.HeaderRewritePolicy{
-								Add: []projcontour.HeaderAddition{{
+							ResponseHeadersPolicy: &projcontour.HeaderPolicy{
+								Set: []projcontour.HeaderAddition{{
 									Name:  "Out-Foo",
 									Value: "bar",
 								}},
@@ -2034,12 +2035,18 @@ func TestRouteVisit(t *testing.T) {
 									Key:   "In-Foo",
 									Value: "bar",
 								},
+								Append: &wrappers.BoolValue{
+									Value: false,
+								},
 							}},
 							RequestHeadersToRemove: []string{"In-Baz"},
 							ResponseHeadersToAdd: []*envoy_api_v2_core.HeaderValueOption{{
 								Header: &envoy_api_v2_core.HeaderValue{
 									Key:   "Out-Foo",
 									Value: "bar",
+								},
+								Append: &wrappers.BoolValue{
+									Value: false,
 								},
 							}},
 							ResponseHeadersToRemove: []string{"Out-Baz"},

@@ -2899,8 +2899,8 @@ func TestDAGInsert(t *testing.T) {
 					Name: "kuard",
 					Port: 8080,
 				}},
-				RequestHeaders: &projcontour.HeaderRewritePolicy{
-					Add: []projcontour.HeaderAddition{{
+				RequestHeadersPolicy: &projcontour.HeaderPolicy{
+					Set: []projcontour.HeaderAddition{{
 						Name:  "In-Foo",
 						Value: "bar",
 					}},
@@ -2908,8 +2908,8 @@ func TestDAGInsert(t *testing.T) {
 						"In-Baz",
 					},
 				},
-				ResponseHeaders: &projcontour.HeaderRewritePolicy{
-					Add: []projcontour.HeaderAddition{{
+				ResponseHeadersPolicy: &projcontour.HeaderPolicy{
+					Set: []projcontour.HeaderAddition{{
 						Name:  "Out-Foo",
 						Value: "bar",
 					}},
@@ -6238,16 +6238,16 @@ func TestSplitSecret(t *testing.T) {
 func TestValidateHeaderAlteration(t *testing.T) {
 	tests := []struct {
 		name       string
-		in         *projcontour.HeaderRewritePolicy
-		wantAdd    map[string]string
+		in         *projcontour.HeaderPolicy
+		wantSet    map[string]string
 		wantRemove []string
 		wantErr    error
 	}{{
 		name: "empty is fine",
 	}, {
-		name: "add two, remove one",
-		in: &projcontour.HeaderRewritePolicy{
-			Add: []projcontour.HeaderAddition{{
+		name: "set two, remove one",
+		in: &projcontour.HeaderPolicy{
+			Set: []projcontour.HeaderAddition{{
 				Name:  "K-Foo",
 				Value: "bar",
 			}, {
@@ -6256,15 +6256,15 @@ func TestValidateHeaderAlteration(t *testing.T) {
 			}},
 			Remove: []string{"K-Nada"},
 		},
-		wantAdd: map[string]string{
+		wantSet: map[string]string{
 			"K-Foo": "bar",
 			"K-Baz": "blah",
 		},
 		wantRemove: []string{"K-Nada"},
 	}, {
-		name: "duplicate add",
-		in: &projcontour.HeaderRewritePolicy{
-			Add: []projcontour.HeaderAddition{{
+		name: "duplicate set",
+		in: &projcontour.HeaderPolicy{
+			Set: []projcontour.HeaderAddition{{
 				Name:  "K-Foo",
 				Value: "bar",
 			}, {
@@ -6275,29 +6275,29 @@ func TestValidateHeaderAlteration(t *testing.T) {
 		wantErr: errors.New(`duplicate header addition: "K-Foo"`),
 	}, {
 		name: "duplicate remove",
-		in: &projcontour.HeaderRewritePolicy{
+		in: &projcontour.HeaderPolicy{
 			Remove: []string{"K-Foo", "k-foo"},
 		},
 		wantErr: errors.New(`duplicate header removal: "K-Foo"`),
 	}, {
-		name: "invalid add header",
-		in: &projcontour.HeaderRewritePolicy{
-			Add: []projcontour.HeaderAddition{{
+		name: "invalid set header",
+		in: &projcontour.HeaderPolicy{
+			Set: []projcontour.HeaderAddition{{
 				Name:  "  K-Foo",
 				Value: "bar",
 			}},
 		},
-		wantErr: errors.New(`invalid add header "  K-Foo": [a valid HTTP header must consist of alphanumeric characters or '-' (e.g. 'X-Header-Name', regex used for validation is '[-A-Za-z0-9]+')]`),
+		wantErr: errors.New(`invalid set header "  K-Foo": [a valid HTTP header must consist of alphanumeric characters or '-' (e.g. 'X-Header-Name', regex used for validation is '[-A-Za-z0-9]+')]`),
 	}, {
 		name: "invalid remove header",
-		in: &projcontour.HeaderRewritePolicy{
+		in: &projcontour.HeaderPolicy{
 			Remove: []string{"  K-Foo"},
 		},
 		wantErr: errors.New(`invalid remove header "  K-Foo": [a valid HTTP header must consist of alphanumeric characters or '-' (e.g. 'X-Header-Name', regex used for validation is '[-A-Za-z0-9]+')]`),
 	}, {
-		name: "invalid add header (special headers)",
-		in: &projcontour.HeaderRewritePolicy{
-			Add: []projcontour.HeaderAddition{{
+		name: "invalid set header (special headers)",
+		in: &projcontour.HeaderPolicy{
+			Set: []projcontour.HeaderAddition{{
 				Name:  "Host",
 				Value: "bar",
 			}},
@@ -6305,8 +6305,8 @@ func TestValidateHeaderAlteration(t *testing.T) {
 		wantErr: errors.New(`rewriting "Host" header is not supported`),
 	}, {
 		name: "percents are escaped",
-		in: &projcontour.HeaderRewritePolicy{
-			Add: []projcontour.HeaderAddition{{
+		in: &projcontour.HeaderPolicy{
+			Set: []projcontour.HeaderAddition{{
 				Name:  "K-Foo",
 				Value: "100%",
 			}, {
@@ -6317,7 +6317,7 @@ func TestValidateHeaderAlteration(t *testing.T) {
 				Value: "%DOWNSTREAM_LOCAL_ADDRESS%",
 			}},
 		},
-		wantAdd: map[string]string{
+		wantSet: map[string]string{
 			"K-Foo":           "100%%",
 			"K-Baz":           "%%DOWNSTREAM_LOCAL_ADDRESS%%",
 			"Lot-Of-Percents": "%%%%%%%%%%",
@@ -6327,9 +6327,9 @@ func TestValidateHeaderAlteration(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			gotAdd, gotRemove, gotErr := validateHeaderRewritePolicy(test.in)
-			if !cmp.Equal(test.wantAdd, gotAdd) {
-				t.Errorf("add (-want, +got) = %s", cmp.Diff(test.wantAdd, gotAdd))
+			gotSet, gotRemove, gotErr := validateHeaderPolicy(test.in)
+			if !cmp.Equal(test.wantSet, gotSet) {
+				t.Errorf("set (-want, +got) = %s", cmp.Diff(test.wantSet, gotSet))
 			}
 			if !cmp.Equal(test.wantRemove, gotRemove) {
 				t.Errorf("remove (-want, +got) = %s", cmp.Diff(test.wantRemove, gotRemove))
@@ -6387,11 +6387,11 @@ func routeWebsocket(prefix string, first *Service, rest ...*Service) *Route {
 	return r
 }
 
-func routeHeaders(prefix string, requestAdd map[string]string, requestRemove []string, responseAdd map[string]string, responseRemove []string, first *Service, rest ...*Service) *Route {
+func routeHeaders(prefix string, requestSet map[string]string, requestRemove []string, responseSet map[string]string, responseRemove []string, first *Service, rest ...*Service) *Route {
 	r := prefixroute(prefix, first, rest...)
-	r.AddRequestHeaders = requestAdd
+	r.SetRequestHeaders = requestSet
 	r.RemoveRequestHeaders = requestRemove
-	r.AddResponseHeaders = responseAdd
+	r.SetResponseHeaders = responseSet
 	r.RemoveResponseHeaders = responseRemove
 	return r
 }

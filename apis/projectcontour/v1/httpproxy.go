@@ -152,12 +152,12 @@ type Route struct {
 	//
 	// +kubebuilder:validation:Optional
 	PathRewrite *PathRewritePolicy `json:"pathRewritePolicy,omitempty"`
-	// RequestHeaders defines how to add or remove headers from requests routed to this route.
+	// RequestHeadersPolicy defines how to add or remove headers from requests routed to this route.
 	// +optional
-	RequestHeaders *HeaderRewritePolicy `json:"requestHeadersPolicy,omitempty"`
-	// ResponseHeaders defines how to add or remove headers from responses returned from this route.
+	RequestHeadersPolicy *HeaderPolicy `json:"requestHeadersPolicy,omitempty"`
+	// ResponseHeadersPolicy defines how to add or remove headers from responses returned from this route.
 	// +optional
-	ResponseHeaders *HeaderRewritePolicy `json:"responseHeadersPolicy,omitempty"`
+	ResponseHeadersPolicy *HeaderPolicy `json:"responseHeadersPolicy,omitempty"`
 }
 
 func (r *Route) GetPrefixReplacements() []ReplacePrefix {
@@ -205,19 +205,19 @@ type Service struct {
 	UpstreamValidation *UpstreamValidation `json:"validation,omitempty"`
 	// If Mirror is true the Service will receive a read only mirror of the traffic for this route.
 	Mirror bool `json:"mirror,omitempty"`
-	// RequestHeaders defines how to add or remove headers from requests routed to this service.
+	// RequestHeadersPolicy defines how to add or remove headers from requests routed to this service.
 	// +optional
-	RequestHeaders *HeaderRewritePolicy `json:"requestHeadersPolicy,omitempty"`
-	// ResponseHeaders defines how to add or remove headers from responses returned from this service.
+	RequestHeadersPolicy *HeaderPolicy `json:"requestHeadersPolicy,omitempty"`
+	// ResponseHeadersPolicy defines how to add or remove headers from responses returned from this service.
 	// +optional
-	ResponseHeaders *HeaderRewritePolicy `json:"responseHeadersPolicy,omitempty"`
+	ResponseHeadersPolicy *HeaderPolicy `json:"responseHeadersPolicy,omitempty"`
 }
 
-// HeaderRewritePolicy defines alterations to the headers being sent to or returned from a service.
-type HeaderRewritePolicy struct {
-	// Add holds the header key/value pairs to add to those sent to or returned from a service.
+// HeaderPolicy defines alterations to the headers being sent to or returned from a service.
+type HeaderPolicy struct {
+	// Set sets the specified headers replacing any existing values associated with the header names.
 	// +optional
-	Add []HeaderAddition `json:"add,omitempty"`
+	Set []HeaderAddition `json:"set,omitempty"`
 	// Remove lists the header keys to remove from those sent to or returned from a service.
 	// +optional
 	Remove []string `json:"remove,omitempty"`

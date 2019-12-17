@@ -143,9 +143,9 @@ func (v *routeVisitor) visit(vertex dag.Vertex) {
 						Match:  envoy.RouteMatch(route),
 						Action: envoy.RouteRoute(route),
 
-						RequestHeadersToAdd:     envoy.HeaderValueList(route.AddRequestHeaders),
+						RequestHeadersToAdd:     envoy.HeaderValueList(route.SetRequestHeaders, false),
 						RequestHeadersToRemove:  route.RemoveRequestHeaders,
-						ResponseHeadersToAdd:    envoy.HeaderValueList(route.AddResponseHeaders),
+						ResponseHeadersToAdd:    envoy.HeaderValueList(route.SetResponseHeaders, false),
 						ResponseHeadersToRemove: route.RemoveResponseHeaders,
 					})
 				})
@@ -167,9 +167,9 @@ func (v *routeVisitor) visit(vertex dag.Vertex) {
 						Match:  envoy.RouteMatch(route),
 						Action: envoy.RouteRoute(route),
 
-						RequestHeadersToAdd:     envoy.HeaderValueList(route.AddRequestHeaders),
+						RequestHeadersToAdd:     envoy.HeaderValueList(route.SetRequestHeaders, false),
 						RequestHeadersToRemove:  route.RemoveRequestHeaders,
-						ResponseHeadersToAdd:    envoy.HeaderValueList(route.AddResponseHeaders),
+						ResponseHeadersToAdd:    envoy.HeaderValueList(route.SetResponseHeaders, false),
 						ResponseHeadersToRemove: route.RemoveResponseHeaders,
 					})
 				})

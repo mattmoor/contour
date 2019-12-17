@@ -23,6 +23,7 @@ import (
 	envoy_api_v2_core "github.com/envoyproxy/go-control-plane/envoy/api/v2/core"
 	envoy_api_v2_route "github.com/envoyproxy/go-control-plane/envoy/api/v2/route"
 	"github.com/golang/protobuf/ptypes/duration"
+	wrappers "github.com/golang/protobuf/ptypes/wrappers"
 	"github.com/projectcontour/contour/internal/dag"
 	"github.com/projectcontour/contour/internal/protobuf"
 )
@@ -181,12 +182,15 @@ func UpgradeHTTPS() *envoy_api_v2_route.Route_Redirect {
 }
 
 // HeaderValueList creates a list of Envoy HeaderValueOptions from the provided map.
-func HeaderValueList(hvm map[string]string) (hvs []*envoy_api_v2_core.HeaderValueOption) {
+func HeaderValueList(hvm map[string]string, app bool) (hvs []*envoy_api_v2_core.HeaderValueOption) {
 	for key, value := range hvm {
 		hvs = append(hvs, &envoy_api_v2_core.HeaderValueOption{
 			Header: &envoy_api_v2_core.HeaderValue{
 				Key:   key,
 				Value: value,
+			},
+			Append: &wrappers.BoolValue{
+				Value: app,
 			},
 		})
 	}
@@ -209,9 +213,9 @@ func singleSimpleCluster(clusters []*dag.Cluster) bool {
 	// If the target cluster performs any kind of header manipulation,
 	// then we should use a WeightedCluster to encode the additional
 	// configuration.
-	return (len(cluster.AddRequestHeaders) +
+	return (len(cluster.SetRequestHeaders) +
 		len(cluster.RemoveRequestHeaders) +
-		len(cluster.AddResponseHeaders) +
+		len(cluster.SetResponseHeaders) +
 		len(cluster.RemoveResponseHeaders)) == 0
 }
 
@@ -225,9 +229,9 @@ func weightedClusters(clusters []*dag.Cluster) *envoy_api_v2_route.WeightedClust
 			Name:   Clustername(cluster),
 			Weight: protobuf.UInt32(cluster.Weight),
 
-			RequestHeadersToAdd:     HeaderValueList(cluster.AddRequestHeaders),
+			RequestHeadersToAdd:     HeaderValueList(cluster.SetRequestHeaders, false),
 			RequestHeadersToRemove:  cluster.RemoveRequestHeaders,
-			ResponseHeadersToAdd:    HeaderValueList(cluster.AddResponseHeaders),
+			ResponseHeadersToAdd:    HeaderValueList(cluster.SetResponseHeaders, false),
 			ResponseHeadersToRemove: cluster.RemoveResponseHeaders,
 		})
 	}

@@ -659,12 +659,18 @@ spec:
                       block is present.
                     type: boolean
                   requestHeadersPolicy:
-                    description: RequestHeaders defines how to add or remove headers
-                      from requests routed to this route.
+                    description: RequestHeadersPolicy defines how to add or remove
+                      headers from requests routed to this route.
                     properties:
-                      add:
-                        description: Add holds the header key/value pairs to add to
-                          those sent to or returned from a service.
+                      remove:
+                        description: Remove lists the header keys to remove from those
+                          sent to or returned from a service.
+                        items:
+                          type: string
+                        type: array
+                      set:
+                        description: Set sets the specified headers replacing any
+                          existing values associated with the header names.
                         items:
                           description: HeaderAddition defines a header key/value pair
                             to be added to those sent to or return from a service.
@@ -679,21 +685,21 @@ spec:
                           - name
                           - value
                           type: object
-                        type: array
-                      remove:
-                        description: Remove lists the header keys to remove from those
-                          sent to or returned from a service.
-                        items:
-                          type: string
                         type: array
                     type: object
                   responseHeadersPolicy:
-                    description: ResponseHeaders defines how to add or remove headers
-                      from responses returned from this route.
+                    description: ResponseHeadersPolicy defines how to add or remove
+                      headers from responses returned from this route.
                     properties:
-                      add:
-                        description: Add holds the header key/value pairs to add to
-                          those sent to or returned from a service.
+                      remove:
+                        description: Remove lists the header keys to remove from those
+                          sent to or returned from a service.
+                        items:
+                          type: string
+                        type: array
+                      set:
+                        description: Set sets the specified headers replacing any
+                          existing values associated with the header names.
                         items:
                           description: HeaderAddition defines a header key/value pair
                             to be added to those sent to or return from a service.
@@ -708,12 +714,6 @@ spec:
                           - name
                           - value
                           type: object
-                        type: array
-                      remove:
-                        description: Remove lists the header keys to remove from those
-                          sent to or returned from a service.
-                        items:
-                          type: string
                         type: array
                     type: object
                   retryPolicy:
@@ -749,12 +749,18 @@ spec:
                             to since a service can have multiple defined.
                           type: integer
                         requestHeadersPolicy:
-                          description: RequestHeaders defines how to add or remove
-                            headers from requests routed to this service.
+                          description: RequestHeadersPolicy defines how to add or
+                            remove headers from requests routed to this service.
                           properties:
-                            add:
-                              description: Add holds the header key/value pairs to
-                                add to those sent to or returned from a service.
+                            remove:
+                              description: Remove lists the header keys to remove
+                                from those sent to or returned from a service.
+                              items:
+                                type: string
+                              type: array
+                            set:
+                              description: Set sets the specified headers replacing
+                                any existing values associated with the header names.
                               items:
                                 description: HeaderAddition defines a header key/value
                                   pair to be added to those sent to or return from
@@ -770,21 +776,21 @@ spec:
                                 - name
                                 - value
                                 type: object
-                              type: array
-                            remove:
-                              description: Remove lists the header keys to remove
-                                from those sent to or returned from a service.
-                              items:
-                                type: string
                               type: array
                           type: object
                         responseHeadersPolicy:
-                          description: ResponseHeaders defines how to add or remove
-                            headers from responses returned from this service.
+                          description: ResponseHeadersPolicy defines how to add or
+                            remove headers from responses returned from this service.
                           properties:
-                            add:
-                              description: Add holds the header key/value pairs to
-                                add to those sent to or returned from a service.
+                            remove:
+                              description: Remove lists the header keys to remove
+                                from those sent to or returned from a service.
+                              items:
+                                type: string
+                              type: array
+                            set:
+                              description: Set sets the specified headers replacing
+                                any existing values associated with the header names.
                               items:
                                 description: HeaderAddition defines a header key/value
                                   pair to be added to those sent to or return from
@@ -800,12 +806,6 @@ spec:
                                 - name
                                 - value
                                 type: object
-                              type: array
-                            remove:
-                              description: Remove lists the header keys to remove
-                                from those sent to or returned from a service.
-                              items:
-                                type: string
                               type: array
                           type: object
                         validation:
@@ -893,12 +893,18 @@ spec:
                           since a service can have multiple defined.
                         type: integer
                       requestHeadersPolicy:
-                        description: RequestHeaders defines how to add or remove headers
-                          from requests routed to this service.
+                        description: RequestHeadersPolicy defines how to add or remove
+                          headers from requests routed to this service.
                         properties:
-                          add:
-                            description: Add holds the header key/value pairs to add
-                              to those sent to or returned from a service.
+                          remove:
+                            description: Remove lists the header keys to remove from
+                              those sent to or returned from a service.
+                            items:
+                              type: string
+                            type: array
+                          set:
+                            description: Set sets the specified headers replacing
+                              any existing values associated with the header names.
                             items:
                               description: HeaderAddition defines a header key/value
                                 pair to be added to those sent to or return from a
@@ -914,21 +920,21 @@ spec:
                               - name
                               - value
                               type: object
-                            type: array
-                          remove:
-                            description: Remove lists the header keys to remove from
-                              those sent to or returned from a service.
-                            items:
-                              type: string
                             type: array
                         type: object
                       responseHeadersPolicy:
-                        description: ResponseHeaders defines how to add or remove
+                        description: ResponseHeadersPolicy defines how to add or remove
                           headers from responses returned from this service.
                         properties:
-                          add:
-                            description: Add holds the header key/value pairs to add
-                              to those sent to or returned from a service.
+                          remove:
+                            description: Remove lists the header keys to remove from
+                              those sent to or returned from a service.
+                            items:
+                              type: string
+                            type: array
+                          set:
+                            description: Set sets the specified headers replacing
+                              any existing values associated with the header names.
                             items:
                               description: HeaderAddition defines a header key/value
                                 pair to be added to those sent to or return from a
@@ -944,12 +950,6 @@ spec:
                               - name
                               - value
                               type: object
-                            type: array
-                          remove:
-                            description: Remove lists the header keys to remove from
-                              those sent to or returned from a service.
-                            items:
-                              type: string
                             type: array
                         type: object
                       validation:
