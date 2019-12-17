@@ -20,6 +20,7 @@ import (
 	v2 "github.com/envoyproxy/go-control-plane/envoy/api/v2"
 	envoy_api_v2_core "github.com/envoyproxy/go-control-plane/envoy/api/v2/core"
 	envoy_api_v2_route "github.com/envoyproxy/go-control-plane/envoy/api/v2/route"
+	"github.com/golang/protobuf/ptypes/wrappers"
 	"github.com/projectcontour/contour/internal/assert"
 	"github.com/projectcontour/contour/internal/dag"
 	"github.com/projectcontour/contour/internal/protobuf"
@@ -211,12 +212,12 @@ func TestRouteRoute(t *testing.T) {
 						ServicePort: &s1.Spec.Ports[0],
 					},
 
-					AddRequestHeaders: map[string]string{
+					SetRequestHeaders: map[string]string{
 						"K-Foo":   "bar",
 						"K-Sauce": "spicy",
 					},
 					RemoveRequestHeaders: []string{"K-Bar"},
-					AddResponseHeaders: map[string]string{
+					SetResponseHeaders: map[string]string{
 						"K-Blah": "boo",
 					},
 					RemoveResponseHeaders: []string{"K-Baz"},
@@ -234,10 +235,16 @@ func TestRouteRoute(t *testing.T) {
 										Key:   "K-Foo",
 										Value: "bar",
 									},
+									Append: &wrappers.BoolValue{
+										Value: false,
+									},
 								}, {
 									Header: &envoy_api_v2_core.HeaderValue{
 										Key:   "K-Sauce",
 										Value: "spicy",
+									},
+									Append: &wrappers.BoolValue{
+										Value: false,
 									},
 								}},
 								RequestHeadersToRemove: []string{"K-Bar"},
@@ -245,6 +252,9 @@ func TestRouteRoute(t *testing.T) {
 									Header: &envoy_api_v2_core.HeaderValue{
 										Key:   "K-Blah",
 										Value: "boo",
+									},
+									Append: &wrappers.BoolValue{
+										Value: false,
 									},
 								}},
 								ResponseHeadersToRemove: []string{"K-Baz"},

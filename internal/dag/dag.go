@@ -114,9 +114,9 @@ type Route struct {
 	// Mirror Policy defines the mirroring policy for this Route.
 	MirrorPolicy *MirrorPolicy
 
-	AddRequestHeaders     map[string]string
+	SetRequestHeaders     map[string]string
 	RemoveRequestHeaders  []string
-	AddResponseHeaders    map[string]string
+	SetResponseHeaders    map[string]string
 	RemoveResponseHeaders []string
 }
 
@@ -359,9 +359,9 @@ type Cluster struct {
 	// Cluster health check policy.
 	*HealthCheckPolicy
 
-	AddRequestHeaders     map[string]string
+	SetRequestHeaders     map[string]string
 	RemoveRequestHeaders  []string
-	AddResponseHeaders    map[string]string
+	SetResponseHeaders    map[string]string
 	RemoveResponseHeaders []string
 }
 

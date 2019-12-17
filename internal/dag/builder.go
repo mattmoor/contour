@@ -687,13 +687,13 @@ func (b *Builder) computeRoutes(sw *ObjectStatusWriter, proxy *projcontour.HTTPP
 			return nil
 		}
 
-		requestAdd, requestRemove, err := validateHeaderRewritePolicy(route.RequestHeaders)
+		requestSet, requestRemove, err := validateHeaderPolicy(route.RequestHeadersPolicy)
 		if err != nil {
 			sw.SetInvalid(err.Error())
 			return nil
 		}
 
-		responseAdd, responseRemove, err := validateHeaderRewritePolicy(route.ResponseHeaders)
+		responseSet, responseRemove, err := validateHeaderPolicy(route.ResponseHeadersPolicy)
 		if err != nil {
 			sw.SetInvalid(err.Error())
 			return nil
@@ -707,9 +707,9 @@ func (b *Builder) computeRoutes(sw *ObjectStatusWriter, proxy *projcontour.HTTPP
 			TimeoutPolicy:    timeoutPolicy(route.TimeoutPolicy),
 			RetryPolicy:      retryPolicy(route.RetryPolicy),
 
-			AddRequestHeaders:     requestAdd,
+			SetRequestHeaders:     requestSet,
 			RemoveRequestHeaders:  requestRemove,
-			AddResponseHeaders:    responseAdd,
+			SetResponseHeaders:    responseSet,
 			RemoveResponseHeaders: responseRemove,
 		}
 
@@ -774,13 +774,13 @@ func (b *Builder) computeRoutes(sw *ObjectStatusWriter, proxy *projcontour.HTTPP
 				}
 			}
 
-			requestAdd, requestRemove, err := validateHeaderRewritePolicy(service.RequestHeaders)
+			requestSet, requestRemove, err := validateHeaderPolicy(service.RequestHeadersPolicy)
 			if err != nil {
 				sw.SetInvalid(err.Error())
 				return nil
 			}
 
-			responseAdd, responseRemove, err := validateHeaderRewritePolicy(service.ResponseHeaders)
+			responseSet, responseRemove, err := validateHeaderPolicy(service.ResponseHeadersPolicy)
 			if err != nil {
 				sw.SetInvalid(err.Error())
 				return nil
@@ -793,9 +793,9 @@ func (b *Builder) computeRoutes(sw *ObjectStatusWriter, proxy *projcontour.HTTPP
 				HealthCheckPolicy:  healthCheckPolicy(route.HealthCheckPolicy),
 				UpstreamValidation: uv,
 
-				AddRequestHeaders:     requestAdd,
+				SetRequestHeaders:     requestSet,
 				RemoveRequestHeaders:  requestRemove,
-				AddResponseHeaders:    responseAdd,
+				SetResponseHeaders:    responseSet,
 				RemoveResponseHeaders: responseRemove,
 			}
 			if service.Mirror && r.MirrorPolicy != nil {
@@ -825,15 +825,15 @@ func escapeHeaderValue(value string) string {
 	return strings.Replace(value, "%", "%%", -1)
 }
 
-func validateHeaderRewritePolicy(alt *projcontour.HeaderRewritePolicy) (map[string]string, []string, error) {
+func validateHeaderPolicy(alt *projcontour.HeaderPolicy) (map[string]string, []string, error) {
 	if alt == nil {
 		return nil, nil, nil
 	}
-	add := make(map[string]string)
+	set := make(map[string]string)
 
-	for _, entry := range alt.Add {
+	for _, entry := range alt.Set {
 		key := http.CanonicalHeaderKey(entry.Name)
-		if _, ok := add[key]; ok {
+		if _, ok := set[key]; ok {
 			return nil, nil, fmt.Errorf("duplicate header addition: %q", key)
 		}
 		switch key {
@@ -841,9 +841,9 @@ func validateHeaderRewritePolicy(alt *projcontour.HeaderRewritePolicy) (map[stri
 			return nil, nil, fmt.Errorf("rewriting %q header is not supported", key)
 		}
 		if msgs := validation.IsHTTPHeaderName(key); len(msgs) != 0 {
-			return nil, nil, fmt.Errorf("invalid add header %q: %v", key, msgs)
+			return nil, nil, fmt.Errorf("invalid set header %q: %v", key, msgs)
 		}
-		add[key] = escapeHeaderValue(entry.Value)
+		set[key] = escapeHeaderValue(entry.Value)
 	}
 
 	remove := sets.NewString()
@@ -857,7 +857,7 @@ func validateHeaderRewritePolicy(alt *projcontour.HeaderRewritePolicy) (map[stri
 		}
 		remove.Insert(key)
 	}
-	return add, remove.List(), nil
+	return set, remove.List(), nil
 }
 
 func includeConditionsIdentical(includes []projcontour.Include) bool {
