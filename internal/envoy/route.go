@@ -180,7 +180,8 @@ func UpgradeHTTPS() *envoy_api_v2_route.Route_Redirect {
 	}
 }
 
-func headerValueList(hvm map[string]string) (hvs []*envoy_api_v2_core.HeaderValueOption) {
+// HeaderValueList creates a list of Envoy HeaderValueOptions from the provided map.
+func HeaderValueList(hvm map[string]string) (hvs []*envoy_api_v2_core.HeaderValueOption) {
 	for key, value := range hvm {
 		hvs = append(hvs, &envoy_api_v2_core.HeaderValueOption{
 			Header: &envoy_api_v2_core.HeaderValue{
@@ -208,10 +209,10 @@ func singleSimpleCluster(clusters []*dag.Cluster) bool {
 	// If the target cluster performs any kind of header manipulation,
 	// then we should use a WeightedCluster to encode the additional
 	// configuration.
-	return 0 == (len(cluster.AddRequestHeaders) +
+	return (len(cluster.AddRequestHeaders) +
 		len(cluster.RemoveRequestHeaders) +
 		len(cluster.AddResponseHeaders) +
-		len(cluster.RemoveResponseHeaders))
+		len(cluster.RemoveResponseHeaders)) == 0
 }
 
 // weightedClusters returns a route.WeightedCluster for multiple services.
@@ -224,9 +225,9 @@ func weightedClusters(clusters []*dag.Cluster) *envoy_api_v2_route.WeightedClust
 			Name:   Clustername(cluster),
 			Weight: protobuf.UInt32(cluster.Weight),
 
-			RequestHeadersToAdd:     headerValueList(cluster.AddRequestHeaders),
+			RequestHeadersToAdd:     HeaderValueList(cluster.AddRequestHeaders),
 			RequestHeadersToRemove:  cluster.RemoveRequestHeaders,
-			ResponseHeadersToAdd:    headerValueList(cluster.AddResponseHeaders),
+			ResponseHeadersToAdd:    HeaderValueList(cluster.AddResponseHeaders),
 			ResponseHeadersToRemove: cluster.RemoveResponseHeaders,
 		})
 	}

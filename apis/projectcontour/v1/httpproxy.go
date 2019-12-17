@@ -152,6 +152,12 @@ type Route struct {
 	//
 	// +kubebuilder:validation:Optional
 	PathRewrite *PathRewritePolicy `json:"pathRewritePolicy,omitempty"`
+	// RequestHeaders defines how to add or remove headers from requests routed to this route.
+	// +optional
+	RequestHeaders *HeaderRewritePolicy `json:"requestHeadersPolicy,omitempty"`
+	// ResponseHeaders defines how to add or remove headers from responses returned from this route.
+	// +optional
+	ResponseHeaders *HeaderRewritePolicy `json:"responseHeadersPolicy,omitempty"`
 }
 
 func (r *Route) GetPrefixReplacements() []ReplacePrefix {

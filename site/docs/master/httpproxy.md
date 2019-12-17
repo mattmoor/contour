@@ -479,9 +479,10 @@ HTTPProxy weighting follows some specific rules:
 
 #### Request and Response Header Policies
 
-Manipulating headers is also supported per-Service.  Headers can be added to or
+Manipulating headers is also supported per-Service or per-Route.  Headers can be added to or
 removed from the request or response as follows:
 
+per-Service:
 ```yaml
 apiVersion: projectcontour.io/v1
 kind: HTTPProxy
@@ -509,7 +510,36 @@ spec:
               - X-Internal-Secret
 ```
 
-In this example we are adding the header `X-Foo` with value `baz` to requests
+
+per-Route
+```yaml
+apiVersion: projectcontour.io/v1
+kind: HTTPProxy
+metadata:
+  name: header-manipulation
+  namespace: default
+spec:
+  virtualhost:
+    fqdn: headers.bar.com
+  routes:
+    - services:
+        - name: s1
+          port: 80
+      requestHeaderPolicy:
+        add:
+          - name: X-Foo
+            value: bar
+        remove:
+          - X-Baz
+      responseHeaderPolicy:
+        add:
+          - name: X-Service-Name
+            value: s1
+        remove:
+          - X-Internal-Secret
+```
+
+In these examples we are adding the header `X-Foo` with value `baz` to requests
 and stripping `X-Baz`.  We are then adding `X-Service-Name` to the response with
 value `s1`, and removing `X-Internal-Secret`.
 

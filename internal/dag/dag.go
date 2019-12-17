@@ -113,6 +113,11 @@ type Route struct {
 
 	// Mirror Policy defines the mirroring policy for this Route.
 	MirrorPolicy *MirrorPolicy
+
+	AddRequestHeaders     map[string]string
+	RemoveRequestHeaders  []string
+	AddResponseHeaders    map[string]string
+	RemoveResponseHeaders []string
 }
 
 // HasPathPrefix returns whether this route has a PrefixPathCondition.
