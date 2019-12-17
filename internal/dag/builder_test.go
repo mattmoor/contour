@@ -2881,6 +2881,46 @@ func TestDAGInsert(t *testing.T) {
 		},
 	}
 
+	// proxy109 has a route that rewrites headers.
+	proxy109 := &projcontour.HTTPProxy{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "example-com",
+			Namespace: "default",
+		},
+		Spec: projcontour.HTTPProxySpec{
+			VirtualHost: &projcontour.VirtualHost{
+				Fqdn: "example.com",
+			},
+			Routes: []projcontour.Route{{
+				Conditions: []projcontour.Condition{{
+					Prefix: "/",
+				}},
+				Services: []projcontour.Service{{
+					Name: "kuard",
+					Port: 8080,
+				}},
+				RequestHeaders: &projcontour.HeaderRewritePolicy{
+					Add: []projcontour.HeaderAddition{{
+						Name:  "In-Foo",
+						Value: "bar",
+					}},
+					Remove: []string{
+						"In-Baz",
+					},
+				},
+				ResponseHeaders: &projcontour.HeaderRewritePolicy{
+					Add: []projcontour.HeaderAddition{{
+						Name:  "Out-Foo",
+						Value: "bar",
+					}},
+					Remove: []string{
+						"Out-Baz",
+					},
+				},
+			}},
+		},
+	}
+
 	tests := map[string]struct {
 		objs                  []interface{}
 		disablePermitInsecure bool
@@ -5367,6 +5407,26 @@ func TestDAGInsert(t *testing.T) {
 			),
 		},
 
+		"insert httpproxy with route-level header manipulation": {
+			objs: []interface{}{
+				proxy109, s1,
+			},
+			want: listeners(
+				&Listener{
+					Port: 80,
+					VirtualHosts: virtualhosts(
+						virtualhost("example.com",
+							routeHeaders("/", map[string]string{
+								"In-Foo": "bar",
+							}, []string{"In-Baz"}, map[string]string{
+								"Out-Foo": "bar",
+							}, []string{"Out-Baz"}, service(s1)),
+						),
+					),
+				},
+			),
+		},
+
 		// issue 1399
 		"service shared across ingress and httpproxy tcpproxy": {
 			objs: []interface{}{
@@ -6212,13 +6272,13 @@ func TestValidateHeaderAlteration(t *testing.T) {
 				Value: "blah",
 			}},
 		},
-		wantErr: errors.New(`Duplicate header addition: "K-Foo"`),
+		wantErr: errors.New(`duplicate header addition: "K-Foo"`),
 	}, {
 		name: "duplicate remove",
 		in: &projcontour.HeaderRewritePolicy{
 			Remove: []string{"K-Foo", "k-foo"},
 		},
-		wantErr: errors.New(`Duplicate header removal: "K-Foo"`),
+		wantErr: errors.New(`duplicate header removal: "K-Foo"`),
 	}, {
 		name: "invalid add header",
 		in: &projcontour.HeaderRewritePolicy{
@@ -6242,7 +6302,7 @@ func TestValidateHeaderAlteration(t *testing.T) {
 				Value: "bar",
 			}},
 		},
-		wantErr: errors.New(`Rewriting "Host" header is not supported`),
+		wantErr: errors.New(`rewriting "Host" header is not supported`),
 	}, {
 		name: "percents are escaped",
 		in: &projcontour.HeaderRewritePolicy{
@@ -6324,6 +6384,15 @@ func routeRewrite(prefix, rewrite string, first *Service, rest ...*Service) *Rou
 func routeWebsocket(prefix string, first *Service, rest ...*Service) *Route {
 	r := prefixroute(prefix, first, rest...)
 	r.Websocket = true
+	return r
+}
+
+func routeHeaders(prefix string, requestAdd map[string]string, requestRemove []string, responseAdd map[string]string, responseRemove []string, first *Service, rest ...*Service) *Route {
+	r := prefixroute(prefix, first, rest...)
+	r.AddRequestHeaders = requestAdd
+	r.RemoveRequestHeaders = requestRemove
+	r.AddResponseHeaders = responseAdd
+	r.RemoveResponseHeaders = responseRemove
 	return r
 }
 

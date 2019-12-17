@@ -21,6 +21,7 @@ import (
 	"github.com/projectcontour/contour/internal/dag"
 
 	v2 "github.com/envoyproxy/go-control-plane/envoy/api/v2"
+	envoy_api_v2_core "github.com/envoyproxy/go-control-plane/envoy/api/v2/core"
 	envoy_api_v2_route "github.com/envoyproxy/go-control-plane/envoy/api/v2/route"
 	"github.com/golang/protobuf/proto"
 	ingressroutev1 "github.com/projectcontour/contour/apis/contour/v1beta1"
@@ -1860,6 +1861,92 @@ func TestRouteVisit(t *testing.T) {
 							MatchType: "present",
 						}), routecluster("default/backend/80/da39a3ee5e")),
 					)),
+				envoy.RouteConfiguration("ingress_https"),
+			),
+		},
+		"httpproxy with route-level header manipulation": {
+			objs: []interface{}{
+				&projcontour.HTTPProxy{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "simple",
+						Namespace: "default",
+					},
+					Spec: projcontour.HTTPProxySpec{
+						VirtualHost: &projcontour.VirtualHost{
+							Fqdn: "www.example.com",
+						},
+						Routes: []projcontour.Route{{
+							Conditions: []projcontour.Condition{{
+								Prefix: "/",
+							}},
+							Services: []projcontour.Service{{
+								Name: "backend",
+								Port: 80,
+							}},
+							RequestHeaders: &projcontour.HeaderRewritePolicy{
+								Add: []projcontour.HeaderAddition{{
+									Name:  "In-Foo",
+									Value: "bar",
+								}},
+								Remove: []string{
+									"In-Baz",
+								},
+							},
+							ResponseHeaders: &projcontour.HeaderRewritePolicy{
+								Add: []projcontour.HeaderAddition{{
+									Name:  "Out-Foo",
+									Value: "bar",
+								}},
+								Remove: []string{
+									"Out-Baz",
+								},
+							},
+						}},
+					},
+				},
+				&v1.Service{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "backend",
+						Namespace: "default",
+					},
+					Spec: v1.ServiceSpec{
+						Ports: []v1.ServicePort{{
+							Protocol:   "TCP",
+							Port:       80,
+							TargetPort: intstr.FromInt(8080),
+						}},
+					},
+				},
+			},
+			want: routeConfigurations(
+				envoy.RouteConfiguration("ingress_http",
+					envoy.VirtualHost("www.example.com",
+						&envoy_api_v2_route.Route{
+							Match: routePrefix("/"),
+							Action: &envoy_api_v2_route.Route_Route{
+								Route: &envoy_api_v2_route.RouteAction{
+									ClusterSpecifier: &envoy_api_v2_route.RouteAction_Cluster{
+										Cluster: "default/backend/80/da39a3ee5e",
+									},
+								},
+							},
+							RequestHeadersToAdd: []*envoy_api_v2_core.HeaderValueOption{{
+								Header: &envoy_api_v2_core.HeaderValue{
+									Key:   "In-Foo",
+									Value: "bar",
+								},
+							}},
+							RequestHeadersToRemove: []string{"In-Baz"},
+							ResponseHeadersToAdd: []*envoy_api_v2_core.HeaderValueOption{{
+								Header: &envoy_api_v2_core.HeaderValue{
+									Key:   "Out-Foo",
+									Value: "bar",
+								},
+							}},
+							ResponseHeadersToRemove: []string{"Out-Baz"},
+						},
+					),
+				),
 				envoy.RouteConfiguration("ingress_https"),
 			),
 		},

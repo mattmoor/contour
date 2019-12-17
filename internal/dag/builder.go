@@ -687,6 +687,18 @@ func (b *Builder) computeRoutes(sw *ObjectStatusWriter, proxy *projcontour.HTTPP
 			return nil
 		}
 
+		requestAdd, requestRemove, err := validateHeaderRewritePolicy(route.RequestHeaders)
+		if err != nil {
+			sw.SetInvalid(err.Error())
+			return nil
+		}
+
+		responseAdd, responseRemove, err := validateHeaderRewritePolicy(route.ResponseHeaders)
+		if err != nil {
+			sw.SetInvalid(err.Error())
+			return nil
+		}
+
 		r := &Route{
 			PathCondition:    mergePathConditions(conds),
 			HeaderConditions: mergeHeaderConditions(conds),
@@ -694,6 +706,11 @@ func (b *Builder) computeRoutes(sw *ObjectStatusWriter, proxy *projcontour.HTTPP
 			HTTPSUpgrade:     routeEnforceTLS(enforceTLS, route.PermitInsecure && !b.DisablePermitInsecure),
 			TimeoutPolicy:    timeoutPolicy(route.TimeoutPolicy),
 			RetryPolicy:      retryPolicy(route.RetryPolicy),
+
+			AddRequestHeaders:     requestAdd,
+			RemoveRequestHeaders:  requestRemove,
+			AddResponseHeaders:    responseAdd,
+			RemoveResponseHeaders: responseRemove,
 		}
 
 		if len(route.GetPrefixReplacements()) > 0 {
@@ -817,11 +834,11 @@ func validateHeaderRewritePolicy(alt *projcontour.HeaderRewritePolicy) (map[stri
 	for _, entry := range alt.Add {
 		key := http.CanonicalHeaderKey(entry.Name)
 		if _, ok := add[key]; ok {
-			return nil, nil, fmt.Errorf("Duplicate header addition: %q", key)
+			return nil, nil, fmt.Errorf("duplicate header addition: %q", key)
 		}
 		switch key {
 		case "Host":
-			return nil, nil, fmt.Errorf("Rewriting %q header is not supported", key)
+			return nil, nil, fmt.Errorf("rewriting %q header is not supported", key)
 		}
 		if msgs := validation.IsHTTPHeaderName(key); len(msgs) != 0 {
 			return nil, nil, fmt.Errorf("invalid add header %q: %v", key, msgs)
@@ -833,7 +850,7 @@ func validateHeaderRewritePolicy(alt *projcontour.HeaderRewritePolicy) (map[stri
 	for _, entry := range alt.Remove {
 		key := http.CanonicalHeaderKey(entry)
 		if remove.Has(key) {
-			return nil, nil, fmt.Errorf("Duplicate header removal: %q", key)
+			return nil, nil, fmt.Errorf("duplicate header removal: %q", key)
 		}
 		if msgs := validation.IsHTTPHeaderName(key); len(msgs) != 0 {
 			return nil, nil, fmt.Errorf("invalid remove header %q: %v", key, msgs)

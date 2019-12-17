@@ -143,6 +143,11 @@ func (v *routeVisitor) visit(vertex dag.Vertex) {
 					routes = append(routes, &envoy_api_v2_route.Route{
 						Match:  match,
 						Action: envoy.RouteRoute(route),
+
+						RequestHeadersToAdd:     envoy.HeaderValueList(route.AddRequestHeaders),
+						RequestHeadersToRemove:  route.RemoveRequestHeaders,
+						ResponseHeadersToAdd:    envoy.HeaderValueList(route.AddResponseHeaders),
+						ResponseHeadersToRemove: route.RemoveResponseHeaders,
 					})
 				})
 				if len(routes) < 1 {
@@ -162,6 +167,11 @@ func (v *routeVisitor) visit(vertex dag.Vertex) {
 					routes = append(routes, &envoy_api_v2_route.Route{
 						Match:  envoy.RouteMatch(route),
 						Action: envoy.RouteRoute(route),
+
+						RequestHeadersToAdd:     envoy.HeaderValueList(route.AddRequestHeaders),
+						RequestHeadersToRemove:  route.RemoveRequestHeaders,
+						ResponseHeadersToAdd:    envoy.HeaderValueList(route.AddResponseHeaders),
+						ResponseHeadersToRemove: route.RemoveResponseHeaders,
 					})
 				})
 				if len(routes) < 1 {
