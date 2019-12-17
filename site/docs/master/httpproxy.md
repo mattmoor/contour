@@ -268,7 +268,7 @@ metadata:
   name: secure-backend
 spec:
   virtualhost:
-    fqdn: www.example.com  
+    fqdn: www.example.com
   routes:
     - services:
         - name: service
@@ -308,7 +308,7 @@ spec:
   delegations:
     - secretName: example-com-wildcard
       targetNamespaces:
-      - example-com 
+      - example-com
     - secretName: another-com-wildcard
       targetNamespaces:
       - "*"
@@ -495,18 +495,18 @@ spec:
     - services:
         - name: s1
           port: 80
-	  requestHeaderPolicy:
-	    add:
-	      - name: X-Foo
-	        value: bar
-	    remove:
-	      - X-Baz
-	  responseHeaderPolicy:
-	    add:
-	      - name: X-Service-Name
-	        value: s1
-	    remove:
-	      - X-Internal-Secret
+          requestHeaderPolicy:
+            add:
+              - name: X-Foo
+                value: bar
+            remove:
+              - X-Baz
+          responseHeaderPolicy:
+            add:
+              - name: X-Service-Name
+                value: s1
+            remove:
+              - X-Internal-Secret
 ```
 
 In this example we are adding the header `X-Foo` with value `baz` to requests
