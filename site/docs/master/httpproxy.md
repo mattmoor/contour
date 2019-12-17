@@ -479,7 +479,7 @@ HTTPProxy weighting follows some specific rules:
 
 #### Request and Response Header Policies
 
-Manipulating headers is also supported per-Service or per-Route.  Headers can be added to or
+Manipulating headers is also supported per-Service or per-Route.  Headers can be set or
 removed from the request or response as follows:
 
 per-Service:
@@ -497,13 +497,13 @@ spec:
         - name: s1
           port: 80
           requestHeaderPolicy:
-            add:
+            set:
               - name: X-Foo
                 value: bar
             remove:
               - X-Baz
           responseHeaderPolicy:
-            add:
+            set:
               - name: X-Service-Name
                 value: s1
             remove:
@@ -525,22 +525,22 @@ spec:
     - services:
         - name: s1
           port: 80
-      requestHeaderPolicy:
-        add:
+      requestHeadersPolicy:
+        set:
           - name: X-Foo
             value: bar
         remove:
           - X-Baz
-      responseHeaderPolicy:
-        add:
+      responseHeadersPolicy:
+        set:
           - name: X-Service-Name
             value: s1
         remove:
           - X-Internal-Secret
 ```
 
-In these examples we are adding the header `X-Foo` with value `baz` to requests
-and stripping `X-Baz`.  We are then adding `X-Service-Name` to the response with
+In these examples we are setting the header `X-Foo` with value `baz` on requests
+and stripping `X-Baz`.  We are then setting `X-Service-Name` on the response with
 value `s1`, and removing `X-Internal-Secret`.
 
 #### Traffic mirroring
