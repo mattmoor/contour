@@ -2900,7 +2900,7 @@ func TestDAGInsert(t *testing.T) {
 					Port: 8080,
 				}},
 				RequestHeadersPolicy: &projcontour.HeaderPolicy{
-					Set: []projcontour.HeaderAddition{{
+					Set: []projcontour.HeaderValue{{
 						Name:  "In-Foo",
 						Value: "bar",
 					}},
@@ -2909,7 +2909,7 @@ func TestDAGInsert(t *testing.T) {
 					},
 				},
 				ResponseHeadersPolicy: &projcontour.HeaderPolicy{
-					Set: []projcontour.HeaderAddition{{
+					Set: []projcontour.HeaderValue{{
 						Name:  "Out-Foo",
 						Value: "bar",
 					}},
@@ -6247,7 +6247,7 @@ func TestValidateHeaderAlteration(t *testing.T) {
 	}, {
 		name: "set two, remove one",
 		in: &projcontour.HeaderPolicy{
-			Set: []projcontour.HeaderAddition{{
+			Set: []projcontour.HeaderValue{{
 				Name:  "K-Foo",
 				Value: "bar",
 			}, {
@@ -6264,7 +6264,7 @@ func TestValidateHeaderAlteration(t *testing.T) {
 	}, {
 		name: "duplicate set",
 		in: &projcontour.HeaderPolicy{
-			Set: []projcontour.HeaderAddition{{
+			Set: []projcontour.HeaderValue{{
 				Name:  "K-Foo",
 				Value: "bar",
 			}, {
@@ -6282,7 +6282,7 @@ func TestValidateHeaderAlteration(t *testing.T) {
 	}, {
 		name: "invalid set header",
 		in: &projcontour.HeaderPolicy{
-			Set: []projcontour.HeaderAddition{{
+			Set: []projcontour.HeaderValue{{
 				Name:  "  K-Foo",
 				Value: "bar",
 			}},
@@ -6297,7 +6297,7 @@ func TestValidateHeaderAlteration(t *testing.T) {
 	}, {
 		name: "invalid set header (special headers)",
 		in: &projcontour.HeaderPolicy{
-			Set: []projcontour.HeaderAddition{{
+			Set: []projcontour.HeaderValue{{
 				Name:  "Host",
 				Value: "bar",
 			}},
@@ -6306,7 +6306,7 @@ func TestValidateHeaderAlteration(t *testing.T) {
 	}, {
 		name: "percents are escaped",
 		in: &projcontour.HeaderPolicy{
-			Set: []projcontour.HeaderAddition{{
+			Set: []projcontour.HeaderValue{{
 				Name:  "K-Foo",
 				Value: "100%",
 			}, {

@@ -217,14 +217,14 @@ type Service struct {
 type HeaderPolicy struct {
 	// Set sets the specified headers replacing any existing values associated with the header names.
 	// +optional
-	Set []HeaderAddition `json:"set,omitempty"`
+	Set []HeaderValue `json:"set,omitempty"`
 	// Remove lists the header keys to remove from those sent to or returned from a service.
 	// +optional
 	Remove []string `json:"remove,omitempty"`
 }
 
-// HeaderAddition defines a header key/value pair to be added to those sent to or return from a service.
-type HeaderAddition struct {
+// HeaderValue defines a header key/value pair to be added to those sent to or return from a service.
+type HeaderValue struct {
 	// Name is the header key to add.
 	Name string `json:"name"`
 	// Value is the header value to add.
