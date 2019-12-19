@@ -622,6 +622,23 @@ func expandPrefixMatches(routes []*Route) []*Route {
 	return expandedRoutes
 }
 
+func (b *Builder) getProtocol(sw *ObjectStatusWriter, service projcontour.Service, s *Service) (string, error) {
+	// Determine the protocol to use to speak to this Cluster.
+	var protocol string
+	if service.Protocol != nil {
+		protocol = *service.Protocol
+		switch protocol {
+		case "h2c", "h2", "tls":
+		default:
+			return "", fmt.Errorf("unsupported protocol: %v", protocol)
+		}
+	} else {
+		protocol = s.Protocol
+	}
+
+	return protocol, nil
+}
+
 func (b *Builder) computeRoutes(sw *ObjectStatusWriter, proxy *projcontour.HTTPProxy, conditions []projcontour.Condition, visited []*projcontour.HTTPProxy, enforceTLS bool) []*Route {
 	for _, v := range visited {
 		// ensure we are not following an edge that produces a cycle
@@ -763,9 +780,15 @@ func (b *Builder) computeRoutes(sw *ObjectStatusWriter, proxy *projcontour.HTTPP
 				return nil
 			}
 
+			// Determine the protocol to use to speak to this Cluster.
+			protocol, err := b.getProtocol(sw, service, s)
+			if err != nil {
+				sw.SetInvalid(err.Error())
+				return nil
+			}
+
 			var uv *UpstreamValidation
-			var err error
-			if s.Protocol == "tls" {
+			if protocol == "tls" {
 				// we can only validate TLS connections to services that talk TLS
 				uv, err = b.lookupUpstreamValidation("??", service.Name, service.UpstreamValidation, proxy.Namespace)
 				if err != nil {
@@ -797,6 +820,8 @@ func (b *Builder) computeRoutes(sw *ObjectStatusWriter, proxy *projcontour.HTTPP
 				RemoveRequestHeaders:  requestRemove,
 				SetResponseHeaders:    responseSet,
 				RemoveResponseHeaders: responseRemove,
+
+				Protocol: protocol,
 			}
 			if service.Mirror && r.MirrorPolicy != nil {
 				sw.SetInvalid("only one service per route may be nominated as mirror")
@@ -1003,8 +1028,8 @@ func (b *Builder) processIngressRoutes(sw *ObjectStatusWriter, ir *ingressroutev
 					return
 				}
 				m := Meta{name: service.Name, namespace: ir.Namespace}
-				s := b.lookupService(m, intstr.FromInt(service.Port))
 
+				s := b.lookupService(m, intstr.FromInt(service.Port))
 				if s == nil {
 					sw.SetInvalid("Service [%s:%d] is invalid or missing", service.Name, service.Port)
 					return
@@ -1020,12 +1045,14 @@ func (b *Builder) processIngressRoutes(sw *ObjectStatusWriter, ir *ingressroutev
 						return
 					}
 				}
+
 				r.Clusters = append(r.Clusters, &Cluster{
 					Upstream:           s,
 					LoadBalancerPolicy: service.Strategy,
 					Weight:             service.Weight,
 					HealthCheckPolicy:  ingressrouteHealthCheckPolicy(service.HealthCheck),
 					UpstreamValidation: uv,
+					Protocol:           s.Protocol,
 				})
 			}
 
@@ -1123,6 +1150,7 @@ func (b *Builder) processIngressRouteTCPProxy(sw *ObjectStatusWriter, ir *ingres
 			proxy.Clusters = append(proxy.Clusters, &Cluster{
 				Upstream:           s,
 				LoadBalancerPolicy: service.Strategy,
+				Protocol:           s.Protocol,
 			})
 		}
 		b.lookupSecureVirtualHost(host).TCPProxy = &proxy
@@ -1197,6 +1225,7 @@ func (b *Builder) processHTTPProxyTCPProxy(sw *ObjectStatusWriter, httpproxy *pr
 			proxy.Clusters = append(proxy.Clusters, &Cluster{
 				Upstream:           s,
 				LoadBalancerPolicy: loadBalancerPolicy(tcpproxy.LoadBalancerPolicy),
+				Protocol:           s.Protocol,
 			})
 		}
 		b.lookupSecureVirtualHost(host).TCPProxy = &proxy
@@ -1270,6 +1299,7 @@ func route(ingress *v1beta1.Ingress, path string, service *Service) *Route {
 		RetryPolicy:   ingressRetryPolicy(ingress),
 		Clusters: []*Cluster{{
 			Upstream: service,
+			Protocol: service.Protocol,
 		}},
 	}
 

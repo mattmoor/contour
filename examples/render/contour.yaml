@@ -822,6 +822,12 @@ spec:
                           description: Port (defined as Integer) to proxy traffic
                             to since a service can have multiple defined.
                           type: integer
+                        protocol:
+                          description: Protocol may be used to specify (or override)
+                            the protocol used to reach this Service. Values may be
+                            tls, h2, h2c.  It ommitted protocol-selection falls back
+                            on Service annotations.
+                          type: string
                         requestHeadersPolicy:
                           description: RequestHeadersPolicy defines how to add or
                             remove headers from requests routed to this service.
@@ -966,6 +972,12 @@ spec:
                         description: Port (defined as Integer) to proxy traffic to
                           since a service can have multiple defined.
                         type: integer
+                      protocol:
+                        description: Protocol may be used to specify (or override)
+                          the protocol used to reach this Service. Values may be tls,
+                          h2, h2c.  It ommitted protocol-selection falls back on Service
+                          annotations.
+                        type: string
                       requestHeadersPolicy:
                         description: RequestHeadersPolicy defines how to add or remove
                           headers from requests routed to this service.
